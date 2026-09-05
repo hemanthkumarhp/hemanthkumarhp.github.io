@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ReportSense v4.1 — email-ingestion automation | Hemanth Kumar H P</title>
+<meta name="description" content="Case study: an n8n automation that matches partner report emails to a daily schedule with TF-IDF fuzzy matching, calling an LLM only when deterministic matching isn't confident.">
+<link rel="canonical" href="https://hemanthkumarhp.github.io/projects/reportsense.html">
+<meta property="og:title" content="ReportSense v4.1 — email-ingestion automation">
+<meta property="og:description" content="Deterministic first, AI second: TF-IDF cosine matching with a score-and-margin accept rule, LLM fallback only for the ambiguous remainder.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://hemanthkumarhp.github.io/projects/reportsense.html">
+<meta name="theme-color" content="#f6f5f1">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../styles.css">
+<script>document.documentElement.classList.add("js");</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<div class="progress" aria-hidden="true"></div>
+
+<header class="site-header">
+  <div class="wrap bar">
+    <a class="wordmark" href="../"><span class="mark-dot" aria-hidden="true"></span>Hemanth Kumar H&nbsp;P</a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="../#projects">Projects</a>
+      <a href="../#how-i-build">Method</a>
+      <a href="../#contact">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main" class="wrap">
+  <article>
+    <header class="article-hero">
+      <p class="kicker mono">Case study — Automation</p>
+      <h1>
+        <span class="line"><span>ReportSense v4.1 — deterministic first,</span></span>
+        <span class="line"><span>AI <span class="accent">only when needed</span>.</span></span>
+      </h1>
+      <p class="lede reveal" style="--d:.35s">
+        An n8n workflow that reads the partner-reports inbox, figures out which
+        scheduled report each email is, and stamps the delivery into PulseOps — so
+        the on-time-delivery numbers on the dashboard update themselves.
+      </p>
+    </header>
+
+    <div class="article-body">
+      <dl class="summary reveal">
+        <div><dt>My role</dt><dd>Problem definition, matching strategy, accept-rule thresholds, failure-mode handling, iteration from v1 to v4.1</dd></div>
+        <div><dt>Status</dt><dd>In production, feeding PulseOps daily</dd></div>
+        <div><dt>Stack</dt><dd>n8n · JavaScript code nodes · OpenRouter LLM · PulseOps webhook API</dd></div>
+        <div><dt>Design rule</dt><dd>The LLM is a fallback, not the engine — most emails never reach it</dd></div>
+      </dl>
+
+      <h2><span class="h-idx" aria-hidden="true">§01</span>The problem</h2>
+      <p>
+        Every day, 50–80 partner reports arrive by email against a delivery
+        schedule. Tracking them used to mean a person reading subjects and updating
+        a tracker — error-prone, late, and unverifiable. Worse, subject lines are
+        messy: abbreviations, aliases, forwarded threads, recalled messages, and
+        "report will be delayed" emails that must not count as deliveries.
+      </p>
+
+      <h2><span class="h-idx" aria-hidden="true">§02</span>How it works</h2>
+      <ol class="steps reveal">
+        <li>
+          <div>
+            <strong>Ingest &amp; deduplicate</strong>
+            <span class="small">IMAP inbox trigger; duplicate messages dropped before any processing.</span>
+          </div>
+        </li>
+        <li>
+          <div>
+            <strong>Fetch the day's catalog once</strong>
+            <span class="small">The report catalog and matching profiles are pulled from the PulseOps API and cached per IST day — one fetch, not one per email.</span>
+          </div>
+        </li>
+        <li>
+          <div>
+            <strong>Classify the email</strong>
+            <span class="small">Regex patterns split report deliveries from recalls ("please ignore") and delay notices ("will share shortly"). The delivery timestamp uses the IMAP arrival time — not the sender's claimed time — so stamps can't be gamed.</span>
+          </div>
+        </li>
+        <li>
+          <div>
+            <strong>Match deterministically</strong>
+            <span class="small">TF-IDF cosine similarity between the subject and per-report profiles. Accept only if the top score clears a floor <em>and</em> beats the runner-up by a margin — a high score that's barely ahead of second place is not a confident match.</span>
+          </div>
+        </li>
+        <li>
+          <div>
+            <strong>Fall back to the LLM only when unsure</strong>
+            <span class="small">Low-confidence emails go to an OpenRouter model with the top-15 cosine-ranked candidates as context. Confident matches skip the LLM entirely — cheaper, faster, and auditable.</span>
+          </div>
+        </li>
+        <li>
+          <div>
+            <strong>Post to PulseOps</strong>
+            <span class="small">Matched deliveries are formatted and POSTed to the PulseOps webhook API, updating the report tracker in near-real-time.</span>
+          </div>
+        </li>
+      </ol>
+
+      <h2><span class="h-idx" aria-hidden="true">§03</span>Decisions worth explaining</h2>
+      <dl class="decisions">
+        <dt>Score <em>and</em> margin, not just score</dt>
+        <dd>Early versions matched on keywords and accepted the best hit. The failure mode was two similar report names ("Order Load — North" vs "Order Load — South") both scoring high. Requiring a gap between first and second place is what actually prevents wrong stamps.</dd>
+        <dt>IMAP INTERNALDATE for the delivery stamp</dt>
+        <dd>The email's Date header says when the sender claims to have sent it. The mailbox arrival time says when the report actually arrived. For an SLA metric, only the second is honest.</dd>
+        <dt>The LLM is quarantined to the ambiguous remainder</dt>
+        <dd>Deterministic code is testable and free; LLM calls are neither. Routing only low-confidence cases to the model keeps costs near zero and means a bad model day can't corrupt the easy 90%.</dd>
+        <dt>Four versions to get here</dt>
+        <dd>v1–v2 used hand-maintained keyword lists in Google Sheets; every new report meant editing keywords. v4.1 builds TF-IDF profiles from the PulseOps catalog itself, so adding a report in PulseOps is all it takes.</dd>
+      </dl>
+
+      <h2><span class="h-idx" aria-hidden="true">§04</span>Outcome</h2>
+      <ul class="tight">
+        <li>Report deliveries stamp themselves into PulseOps; the tracker no longer depends on a person reading an inbox.</li>
+        <li>Recalls and delay notices are classified instead of miscounted as deliveries.</li>
+        <li>Most emails match without any AI call; the LLM handles only the genuinely ambiguous tail.</li>
+      </ul>
+
+      <a class="backlink" href="../#projects"><span class="arr" aria-hidden="true">←</span> All projects</a>
+    </div>
+  </article>
+</main>
+
+<footer class="site-footer compact">
+  <div class="wrap">
+    <div class="footer-links">
+      <a href="mailto:hphemanthkumar95@gmail.com">hphemanthkumar95@gmail.com</a>
+      <a href="https://www.linkedin.com/in/hemanthkumarhp" rel="me">LinkedIn ↗</a>
+      <a href="https://github.com/hemanthkumarhp" rel="me">GitHub ↗</a>
+    </div>
+    <div class="footer-note">
+      <span>Plain HTML &amp; CSS — no frameworks, no build step, no trackers.</span>
+    </div>
+  </div>
+</footer>
+
+<script src="../main.js" defer></script>
+</body>
+</html>

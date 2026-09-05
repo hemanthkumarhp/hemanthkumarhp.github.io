@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PulseOps — SLA-tracked helpdesk platform | Hemanth Kumar H P</title>
+<meta name="description" content="Case study: how a support engineer designed and shipped PulseOps, a full-stack helpdesk and operations platform with a business-hours SLA engine, now in daily production use.">
+<link rel="canonical" href="https://hemanthkumarhp.github.io/projects/pulseops.html">
+<meta property="og:title" content="PulseOps — SLA-tracked helpdesk platform">
+<meta property="og:description" content="From email + Excel to a production ticketing system: data model, SLA engine, RBAC, dashboards — designed and operated by the person who works the queue.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://hemanthkumarhp.github.io/projects/pulseops.html">
+<meta property="og:image" content="https://hemanthkumarhp.github.io/assets/img/pulseops-dashboard.webp">
+<meta name="theme-color" content="#f6f5f1">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../styles.css">
+<script>document.documentElement.classList.add("js");</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<div class="progress" aria-hidden="true"></div>
+
+<header class="site-header">
+  <div class="wrap bar">
+    <a class="wordmark" href="../"><span class="mark-dot" aria-hidden="true"></span>Hemanth Kumar H&nbsp;P</a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="../#projects">Projects</a>
+      <a href="../#how-i-build">Method</a>
+      <a href="../#contact">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main" class="wrap">
+  <article>
+    <header class="article-hero">
+      <p class="kicker mono">Case study — Flagship project</p>
+      <h1>
+        <span class="line"><span>PulseOps — the helpdesk platform</span></span>
+        <span class="line"><span>my team <span class="accent">actually runs on</span>.</span></span>
+      </h1>
+      <p class="lede reveal" style="--d:.35s">
+        A full-stack ticketing and operations platform with a business-hours SLA
+        engine, role-based access, report-delivery tracking, and leadership
+        dashboards. It replaced a slow legacy complaints portal and a mesh of
+        Excel trackers — and it's in daily production use.
+      </p>
+    </header>
+
+    <div class="article-body">
+      <dl class="summary reveal">
+        <div><dt>My role</dt><dd>Everything except most of the typing: requirements, data model, SLA rules, UX decisions, testing, deployment, operations</dd></div>
+        <div><dt>Status</dt><dd>In daily production use by my support team</dd></div>
+        <div><dt>Stack</dt><dd>React 19 · Express 5 · TypeScript · PostgreSQL 16 · Docker · JWT</dd></div>
+        <div><dt>Scale</dt><dd>32 database tables · 70+ test files · 10+ service modules</dd></div>
+        <div><dt>Built with</dt><dd>AI-assisted development (Claude Code + Codex, BMAD method) — <a href="../#how-i-build">how I build</a></dd></div>
+        <div><dt>Links</dt><dd><a href="https://pulseops.duckdns.org/" rel="noopener">Live instance</a> (synthetic-data demo being prepared) · public repo being prepared</dd></div>
+      </dl>
+
+      <figure class="shot reveal">
+        <div class="shot-window">
+          <div class="shot-bar" aria-hidden="true">
+            <span class="addr">pulseops — helpdesk queue</span>
+            <span class="live"></span>
+          </div>
+          <div class="shot-frame natural">
+            <img src="../assets/img/pulseops-tickets.webp" alt="PulseOps helpdesk queue showing five open tickets with type, priority, status, SLA state, age, assignee and partner columns" width="1600" height="841" loading="eager">
+          </div>
+        </div>
+        <figcaption class="shot-cap">The helpdesk queue: priority, status, SLA state, and ownership on one screen. Partner and requester names blurred.</figcaption>
+      </figure>
+
+      <h2><span class="h-idx" aria-hidden="true">§01</span>The problem</h2>
+      <p>
+        My team supports Lenovo's channel-data workflow for partners across India:
+        tickets, escalations, and a daily schedule of 50–80 partner reports that
+        must land on time. The tooling was a legacy complaints portal everyone
+        avoided, plus email and Excel trackers. That meant no SLA visibility, no
+        ownership trail, manual delivery tracking, and leadership asking for
+        numbers nobody could produce without an evening of spreadsheet work.
+      </p>
+
+      <h2><span class="h-idx" aria-hidden="true">§02</span>Constraints</h2>
+      <ul class="tight">
+        <li><strong>One person, evenings.</strong> I work the queue by day; there was no engineering team behind this.</li>
+        <li><strong>Production from day one.</strong> Real partner data and real SLAs — a broken migration isn't a learning experience, it's an outage.</li>
+        <li><strong>Simple over clever.</strong> Every piece uses boring, proven patterns (raw SQL, Express, server API + SPA client) because I have to operate and debug it myself.</li>
+      </ul>
+
+      <h2><span class="h-idx" aria-hidden="true">§03</span>What I built</h2>
+      <ul class="tight">
+        <li><strong>SLA engine with business-hours math.</strong> Response and resolution targets come from a priority matrix; the clock runs in business minutes (a PostgreSQL function), pauses automatically when a ticket waits on the customer or on data, and resumes on reply. States: within → at-risk → breached, with the at-risk threshold configurable per SLA.</li>
+        <li><strong>Ticket state machine.</strong> Only valid transitions for each ticket type and status are offered — an agent can't skip from New to Resolved without the steps between. Every transition writes a system event to the ticket timeline.</li>
+        <li><strong>Role-based access.</strong> Analyst, Manager, and Admin roles with JWT + refresh-token auth, scoped queries, rate limiting, and an audit log.</li>
+        <li><strong>Report-delivery tracker.</strong> The daily report schedule with on-time-delivery and fulfillment rates, delay categories, responsibility attribution, and per-analyst workload — fed automatically by <a href="reportsense.html">ReportSense</a>.</li>
+        <li><strong>Leadership dashboards.</strong> Day's pulse, per-analyst summaries, capacity planning in effort-minutes, and exception ownership — the numbers that used to take an evening now load in a click.</li>
+        <li><strong>Excel in, Excel out.</strong> Bulk import with validation and fuzzy matching for legacy data; date-range exports for anyone who still wants a workbook.</li>
+      </ul>
+
+      <figure class="shot reveal">
+        <div class="shot-window">
+          <div class="shot-bar" aria-hidden="true">
+            <span class="addr">pulseops — ticket detail</span>
+            <span class="live"></span>
+          </div>
+          <div class="shot-frame">
+            <img src="../assets/img/pulseops-ticket-detail.webp" alt="PulseOps ticket detail page with next-action buttons, reply and worknote editor, full timeline of status changes, and a properties panel showing SLA state and routing" width="1600" height="1801" loading="lazy">
+          </div>
+        </div>
+        <figcaption class="shot-cap">Ticket detail: valid next actions only, canned responses, and a full audit timeline. Partner details blurred. Hover to explore.</figcaption>
+      </figure>
+
+      <figure class="shot reveal">
+        <div class="shot-window">
+          <div class="shot-bar" aria-hidden="true">
+            <span class="addr">pulseops — report deliveries</span>
+            <span class="live"></span>
+          </div>
+          <div class="shot-frame">
+            <img src="../assets/img/pulseops-reports.webp" alt="PulseOps reports page listing a full day of scheduled partner reports with target time, delivered time, on-time or late status, delay category and responsibility columns" width="1600" height="2632" loading="lazy">
+          </div>
+        </div>
+        <figcaption class="shot-cap">One day of report deliveries: 83 scheduled, each with target vs. actual, delay category, and responsibility. Analyst names blurred. Hover to explore.</figcaption>
+      </figure>
+
+      <h2><span class="h-idx" aria-hidden="true">§04</span>Decisions worth explaining</h2>
+      <dl class="decisions">
+        <dt>Raw SQL instead of an ORM</dt>
+        <dd>I need to read, explain, and debug every query — and practising SQL against my own schema is part of the point. An ORM would hide exactly the layer I most need to understand.</dd>
+        <dt>SLA pause as first-class state, not a report-time adjustment</dt>
+        <dd>Pause timestamps and accumulated pause milliseconds live on the ticket; the effective deadline is computed from them. That makes "why is this ticket not breached?" answerable from the data, which matters when leadership audits a number.</dd>
+        <dt>Business-minutes function in the database</dt>
+        <dd>Due-time math lives in one tested PostgreSQL function used by inserts, updates, and backfills alike — not re-implemented in three places that would drift.</dd>
+        <dt>Beta rollout behind a label</dt>
+        <dd>The helpdesk module shipped to the team marked "Beta — Work in Progress" while the legacy flow stayed available, so adoption was earned, not forced.</dd>
+      </dl>
+
+      <h2><span class="h-idx" aria-hidden="true">§05</span>Validation</h2>
+      <p>
+        70+ test files across services, middleware, and routes — unit tests for
+        the SLA math and state machine, integration tests against a real
+        PostgreSQL instance for the API. Migrations ship with backfills (e.g.
+        recomputing SLA due times for existing tickets) and were rehearsed on a
+        sanitized copy of production data before running for real.
+      </p>
+
+      <h2><span class="h-idx" aria-hidden="true">§06</span>Outcome</h2>
+      <ul class="tight">
+        <li>In daily production use by the team — the legacy complaints portal and Excel trackers are retired from the workflow.</li>
+        <li>~30 minutes a day of manual tracking eliminated, with leadership KPIs available on demand instead of on request.</li>
+        <li>Every ticket now has an SLA state, an owner, and an auditable timeline.</li>
+        <li>SLA-compliance and resolution-time metrics are accumulating now that the system measures them — real figures will replace this sentence as they mature.</li>
+      </ul>
+
+      <h2><span class="h-idx" aria-hidden="true">§07</span>What's next</h2>
+      <p>
+        Escalation tracking (the dashboard tile already reserves the spot), SLA
+        at-risk/breach rollups on the helpdesk dashboard, and an automated daily
+        summary email. The public demo instance with synthetic data is being
+        prepared so you can explore all of this yourself.
+      </p>
+
+      <a class="backlink" href="../#projects"><span class="arr" aria-hidden="true">←</span> All projects</a>
+    </div>
+  </article>
+</main>
+
+<footer class="site-footer compact">
+  <div class="wrap">
+    <div class="footer-links">
+      <a href="mailto:hphemanthkumar95@gmail.com">hphemanthkumar95@gmail.com</a>
+      <a href="https://www.linkedin.com/in/hemanthkumarhp" rel="me">LinkedIn ↗</a>
+      <a href="https://github.com/hemanthkumarhp" rel="me">GitHub ↗</a>
+    </div>
+    <div class="footer-note">
+      <span>Plain HTML &amp; CSS — no frameworks, no build step, no trackers.</span>
+    </div>
+  </div>
+</footer>
+
+<script src="../main.js" defer></script>
+</body>
+</html>

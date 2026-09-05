@@ -1,0 +1,12 @@
+.DS_Store
+*.log
+node_modules/
+
+# Private — never publish
+resume-improvements.md
+Hemanth-Kumar-Resume.docx
+screenshots/
+
+# Archived earlier site versions (kept on disk, not published)
+site/
+site-v2/

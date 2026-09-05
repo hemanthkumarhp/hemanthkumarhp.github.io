@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>T1 Commercial DSR Validator | Hemanth Kumar H P</title>
+<meta name="description" content="Case study: a Python validator that recomputes 18 fields of a daily client sales report before delivery — error rate zero since adoption, 28 unit tests.">
+<link rel="canonical" href="https://hemanthkumarhp.github.io/projects/t1-dsr-validator.html">
+<meta property="og:title" content="T1 Commercial DSR Validator">
+<meta property="og:description" content="A daily client report used to ship on trust. Now it ships after 18 fields are recomputed and verified — and its error rate has been zero since.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://hemanthkumarhp.github.io/projects/t1-dsr-validator.html">
+<meta name="theme-color" content="#f6f5f1">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../styles.css">
+<script>document.documentElement.classList.add("js");</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<div class="progress" aria-hidden="true"></div>
+
+<header class="site-header">
+  <div class="wrap bar">
+    <a class="wordmark" href="../"><span class="mark-dot" aria-hidden="true"></span>Hemanth Kumar H&nbsp;P</a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="../#projects">Projects</a>
+      <a href="../#how-i-build">Method</a>
+      <a href="../#contact">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main" class="wrap">
+  <article>
+    <header class="article-hero">
+      <p class="kicker mono">Case study — Data validation</p>
+      <h1>
+        <span class="line"><span>T1 Commercial DSR Validator —</span></span>
+        <span class="line"><span><span class="accent">zero errors</span> since adoption.</span></span>
+      </h1>
+      <p class="lede reveal" style="--d:.35s">
+        A daily sales report goes to the client every day. It used to ship on trust
+        and spot-checks. Now it ships after a validator recomputes all 18 derived
+        fields from reference data and confirms they match.
+      </p>
+    </header>
+
+    <div class="article-body">
+      <dl class="summary reveal">
+        <div><dt>My role</dt><dd>Defined the validation rules and reference logic, specified the outputs, tested against months of real reports</dd></div>
+        <div><dt>Status</dt><dd>Run daily before the report is delivered</dd></div>
+        <div><dt>Stack</dt><dd>Python · pandas · openpyxl</dd></div>
+        <div><dt>Tests</dt><dd>28 unit tests over the validation logic</dd></div>
+      </dl>
+
+      <h2><span class="h-idx" aria-hidden="true">§01</span>The problem</h2>
+      <p>
+        The Daily Sales Report is client-facing: 18 of its columns are derived from
+        a quarterly template and a master mapping workbook. A wrong lookup or stale
+        mapping meant a wrong number in front of the client — found, if at all,
+        after delivery. Manual spot-checks caught some errors and missed others,
+        and every check cost analyst time the team didn't have.
+      </p>
+
+      <h2><span class="h-idx" aria-hidden="true">§02</span>How it works</h2>
+      <ul class="tight">
+        <li>Reads exactly three Excel inputs — the template, the MTM master, and the day's DSR — identifying each by filename pattern, and refuses to run on ambiguous input.</li>
+        <li>Recomputes all 18 derived columns independently from the reference workbooks and compares them cell-by-cell to what the DSR actually says.</li>
+        <li>Writes one output workbook with a <code>summary</code> sheet, a <code>data</code> sheet listing every failing row with expected vs. actual values, and a <code>warnings</code> sheet for rows it can't verify (e.g. a model missing from the master).</li>
+        <li>Logs every run to a timestamped file, so "was it validated?" is always answerable.</li>
+        <li>Ships with a README written for non-technical colleagues — the tool is only useful if the team can run it without me.</li>
+      </ul>
+
+      <h2><span class="h-idx" aria-hidden="true">§03</span>Decisions worth explaining</h2>
+      <dl class="decisions">
+        <dt>Recompute, don't sample</dt>
+        <dd>Spot-checking finds the errors you guessed might exist. Recomputing every derived cell finds the ones you didn't — which is the category that reaches clients.</dd>
+        <dt>Warnings are separate from failures</dt>
+        <dd>A row the validator can't verify is not the same as a row that's wrong. Mixing them teaches people to ignore the report; separating them keeps failures loud.</dd>
+        <dt>Unit tests on the validator itself</dt>
+        <dd>A validator with a bug is worse than no validator — it manufactures false confidence. The 28 tests pin the matching, lookup, and comparison logic against fixture workbooks.</dd>
+      </dl>
+
+      <h2><span class="h-idx" aria-hidden="true">§04</span>Outcome</h2>
+      <ul class="tight">
+        <li>The report's error rate has been zero since the validator became part of the daily pre-delivery routine.</li>
+        <li>Checking is now minutes of machine time instead of analyst attention.</li>
+        <li>A sibling tool, the MTM–PCSD Validator, applies the same philosophy to reconciling two master datasets — with every comparison rule in a JSON config so field pairs can change without code changes.</li>
+      </ul>
+
+      <a class="backlink" href="../#projects"><span class="arr" aria-hidden="true">←</span> All projects</a>
+    </div>
+  </article>
+</main>
+
+<footer class="site-footer compact">
+  <div class="wrap">
+    <div class="footer-links">
+      <a href="mailto:hphemanthkumar95@gmail.com">hphemanthkumar95@gmail.com</a>
+      <a href="https://www.linkedin.com/in/hemanthkumarhp" rel="me">LinkedIn ↗</a>
+      <a href="https://github.com/hemanthkumarhp" rel="me">GitHub ↗</a>
+    </div>
+    <div class="footer-note">
+      <span>Plain HTML &amp; CSS — no frameworks, no build step, no trackers.</span>
+    </div>
+  </div>
+</footer>
+
+<script src="../main.js" defer></script>
+</body>
+</html>
