@@ -10,3 +10,6 @@ screenshots/
 # Archived earlier site versions (kept on disk, not published)
 site/
 site-v2/
+
+# Local agent instructions (describes the private files; keep off the public repo)
+CLAUDE.md
