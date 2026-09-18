@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ReportSense v4.1 — email-ingestion automation | Hemanth Kumar H P</title>
-<meta name="description" content="Case study: an n8n automation that matches partner report emails to a daily schedule with TF-IDF fuzzy matching, calling an LLM only when deterministic matching isn't confident.">
+<meta name="description" content="Case study: an n8n automation that matches partner report emails to a daily schedule using deterministic TF-IDF cosine similarity with a score-and-margin accept rule — and what happened when it silently drifted.">
 <link rel="canonical" href="https://hemanthkumarhp.github.io/projects/reportsense.html">
 <meta property="og:title" content="ReportSense v4.1 — email-ingestion automation">
-<meta property="og:description" content="Deterministic first, AI second: TF-IDF cosine matching with a score-and-margin accept rule, LLM fallback only for the ambiguous remainder.">
+<meta property="og:description" content="Deterministic matching with a score-and-margin accept rule that refuses to guess — plus the RCA of the three months it quietly stopped working.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://hemanthkumarhp.github.io/projects/reportsense.html">
 <meta name="theme-color" content="#f6f5f1">
@@ -52,8 +52,9 @@
       <dl class="summary reveal">
         <div><dt>My role</dt><dd>Problem definition, matching strategy, accept-rule thresholds, failure-mode handling, iteration from v1 to v4.1</dd></div>
         <div><dt>Status</dt><dd>In production, feeding PulseOps daily</dd></div>
-        <div><dt>Stack</dt><dd>n8n · JavaScript code nodes · OpenRouter LLM · PulseOps webhook API</dd></div>
-        <div><dt>Design rule</dt><dd>The LLM is a fallback, not the engine — most emails never reach it</dd></div>
+        <div><dt>Stack</dt><dd>n8n · JavaScript code nodes · PulseOps webhook API · OpenRouter LLM (built, currently switched off)</dd></div>
+        <div><dt>Design rule</dt><dd>Refuse to guess. An ambiguous match becomes visible work, never a silent verdict</dd></div>
+        <div><dt>Scale</dt><dd>5,982 emails over 125 active days · 90.2% handled with no human touch</dd></div>
       </dl>
 
       <h2><span class="h-idx" aria-hidden="true">§01</span>The problem</h2>
@@ -63,6 +64,14 @@
         a tracker — error-prone, late, and unverifiable. Worse, subject lines are
         messy: abbreviations, aliases, forwarded threads, recalled messages, and
         "report will be delayed" emails that must not count as deliveries.
+      </p>
+      <p>
+        This was my own daily task. I read that mailbox every morning, recorded
+        the actual delivery time of 60&ndash;100 scheduled reports into an Excel
+        tracker by hand, and presented the compliance position in the next day's
+        meeting. It took about <strong>45 minutes a day</strong>. It now takes
+        about <strong>five</strong> &mdash; reviewing the handful of emails the
+        matcher declines to decide.
       </p>
 
       <h2><span class="h-idx" aria-hidden="true">§02</span>How it works</h2>
@@ -93,8 +102,8 @@
         </li>
         <li>
           <div>
-            <strong>Fall back to the LLM only when unsure</strong>
-            <span class="small">Low-confidence emails go to an OpenRouter model with the top-15 cosine-ranked candidates as context. Confident matches skip the LLM entirely — cheaper, faster, and auditable.</span>
+            <strong>Route the unsure ones to a human</strong>
+            <span class="small">Anything that fails the accept rule goes to a review queue in PulseOps, where a person resolves it &mdash; and that correction feeds the next profile rebuild. An LLM fallback exists for this branch but is currently switched off; see below.</span>
           </div>
         </li>
         <li>
@@ -111,8 +120,10 @@
         <dd>Early versions matched on keywords and accepted the best hit. The failure mode was two similar report names ("Order Load — North" vs "Order Load — South") both scoring high. Requiring a gap between first and second place is what actually prevents wrong stamps.</dd>
         <dt>IMAP INTERNALDATE for the delivery stamp</dt>
         <dd>The email's Date header says when the sender claims to have sent it. The mailbox arrival time says when the report actually arrived. For an SLA metric, only the second is honest.</dd>
-        <dt>The LLM is quarantined to the ambiguous remainder</dt>
-        <dd>Deterministic code is testable and free; LLM calls are neither. Routing only low-confidence cases to the model keeps costs near zero and means a bad model day can't corrupt the easy 90%.</dd>
+        <dt>The LLM fallback is built, and currently switched off</dt>
+        <dd>Deterministic code is testable and free; LLM calls are neither. I built the fallback, ran it, and then disabled all four nodes &mdash; at roughly three unmatched emails a day, resolving them by hand costs less than an API call on every low-confidence mail. It is a cost decision, not dead code, and re-enabling is a toggle rather than a build. The honest counter-argument is below: switching it off also removed the buffer that would have absorbed the drift.</dd>
+        <dt>From LLM-first to deterministic, over four generations</dt>
+        <dd>v1 matched entirely with an LLM because it worked immediately and I did not yet understand the report vocabulary. v2 and v3 moved to fuzzy matching with the model as backup. v4 replaced it with TF-IDF profiles built from the catalog itself. The direction of travel is the point &mdash; every generation moved work from the model to inspectable code as the domain became better understood, which made it cheaper, testable, and explainable.</dd>
         <dt>Four versions to get here</dt>
         <dd>v1–v2 used hand-maintained keyword lists in Google Sheets; every new report meant editing keywords. v4.1 builds TF-IDF profiles from the PulseOps catalog itself, so adding a report in PulseOps is all it takes.</dd>
       </dl>
@@ -121,8 +132,21 @@
       <ul class="tight">
         <li>Report deliveries stamp themselves into PulseOps; the tracker no longer depends on a person reading an inbox.</li>
         <li>Recalls and delay notices are classified instead of miscounted as deliveries.</li>
-        <li>Most emails match without any AI call; the LLM handles only the genuinely ambiguous tail.</li>
+        <li>No AI call is made in normal operation &mdash; the matching that runs in production today is entirely deterministic and inspectable.</li>
       </ul>
+      <dl class="facts reveal">
+        <div class="row"><dt>Emails processed</dt><dd>5,982 across 125 active days (29 Apr &ndash; 8 Sep 2026)</dd></div>
+        <div class="row"><dt>Daily volume</dt><dd>median 50, peak 111</dd></div>
+        <div class="row"><dt>Matched deterministically</dt><dd>5,061 of 5,825 report emails &mdash; 86.9%</dd></div>
+        <div class="row"><dt>Straight through, no human touch</dt><dd>5,253 of 5,825 &mdash; 90.2%</dd></div>
+        <div class="row"><dt>Routed to human review</dt><dd>572 &mdash; 9.8%, about three a day</dd></div>
+        <div class="row"><dt>Recalls and delay notices filtered out</dt><dd>157, before matching &mdash; an apology is never recorded as a delivery</dd></div>
+      </dl>
+      <p class="note">
+        Figures are computed from a production log export covering 29 April to
+        8 September 2026. The 157 recall and delay emails are excluded before
+        matching, so they are not in the 5,825 denominator.
+      </p>
 
       <h2><span class="h-idx" aria-hidden="true">§05</span>When it drifted, and what I did</h2>
       <p>
@@ -142,6 +166,13 @@
         hand. Automating that rebuild is the next change &mdash; until it ships, the
         drift can recur.
       </p>
+
+      <h2><span class="h-idx" aria-hidden="true">§06</span>What I'd change</h2>
+      <ul class="tight">
+        <li><strong>Automate the profile rebuild.</strong> This is the real fix for the drift above and it hasn't shipped. The rebuild still depends on someone pressing a button; until it runs on a schedule, the same failure can recur.</li>
+        <li><strong>Test the accept rule.</strong> Coverage on the matcher is one parameterised test over the tokenizer. The scoring and the two-condition accept rule &mdash; the logic that actually decides things &mdash; are untested. The review queue catches the consequences, which is why this survived, not a reason it should.</li>
+        <li><strong>Re-examine switching off the LLM.</strong> The decision was right at two or three misses a day and expensive when the miss rate hit 15%, because it removed the buffer that would have absorbed the drift. The better design is probably to re-enable it with a spend cap rather than leave it off.</li>
+      </ul>
 
       <a class="backlink" href="../#projects"><span class="arr" aria-hidden="true">←</span> All projects</a>
     </div>
