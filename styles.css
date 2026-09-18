@@ -315,6 +315,7 @@ html.js .status-line .pulse::after {
   gap: 3.5rem;
 }
 html.js .marquee-track { animation: marquee 30s linear infinite; }
+.marquee:hover .marquee-track, .marquee:focus-within .marquee-track { animation-play-state: paused; }
 .marquee-group {
   display: flex;
   gap: 3.5rem;
@@ -332,10 +333,6 @@ html.js .marquee-track { animation: marquee 30s linear infinite; }
 .marquee-group span strong { color: var(--ink); font-weight: 620; }
 .marquee-group .sep { color: var(--accent); letter-spacing: 0; }
 @keyframes marquee { to { transform: translateX(calc(-50% - 1.75rem)); } }
-.marquee.static { overflow: visible; }
-.marquee.static .marquee-track { width: auto; flex-wrap: wrap; justify-content: center; }
-html.js .marquee.static .marquee-track { animation: none; }
-.marquee.static .marquee-group { flex-wrap: wrap; justify-content: center; gap: 0.75rem 2.5rem; }
 .proj-proves {
   font-size: 0.72rem;
   letter-spacing: 0.12em;
