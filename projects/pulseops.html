@@ -54,6 +54,8 @@
       <dl class="summary reveal">
         <div><dt>My role</dt><dd>Everything except most of the typing: requirements, data model, SLA rules, UX decisions, testing, deployment, operations</dd></div>
         <div><dt>Status</dt><dd>In daily production use by my support team</dd></div>
+        <div><dt>Origin</dt><dd>Built on my own initiative &mdash; the team had no ticketing tool at all; requests arrived by email and phone and were tracked in Excel</dd></div>
+        <div><dt>Adoption</dt><dd>Accepted by my manager, now running on company GCP infrastructure with a DevOps resource assigned. 18 users provisioned, 11 active, across six roles</dd></div>
         <div><dt>Stack</dt><dd>React 19 · Express 5 · TypeScript · PostgreSQL 16 · Docker · JWT</dd></div>
         <div><dt>Scale</dt><dd>34 tables · ~61,600 lines of TypeScript · ~2,750 automated tests · 664 commits</dd></div>
         <div><dt>Reliability</dt><dd>Live since 18 May 2026 — no incidents to date</dd></div>
@@ -137,6 +139,10 @@
         <dd>Due-time math lives in one tested PostgreSQL function used by inserts, updates, and backfills alike — not re-implemented in three places that would drift.</dd>
         <dt>Beta rollout behind a label</dt>
         <dd>The helpdesk module shipped to the team marked "Beta — Work in Progress" while the legacy flow stayed available, so adoption was earned, not forced.</dd>
+        <dt>Authorisation in the application, deliberately &mdash; not Postgres RLS</dt>
+        <dd>Row scoping runs in three application layers: a route-level role gate, a scope resolver, then query filtering. The database has <em>no</em> row-level security policies; it sets session variables for audit context only. That was a documented decision, not an oversight &mdash; I can operate and debug a filter I can read in the query. The trade-off is real and I'd say so in an interview: RLS would enforce scoping even if a query forgot to, and mine relies on the layering holding. It's enforced by a lint rule that blocks routes and handlers from importing the query layer at all, checked at commit time &mdash; which catches drift early, but is not the same guarantee the database would give me.</dd>
+        <dt>Boring, proven patterns, because I operate it alone</dt>
+        <dd>Raw parameterised SQL with no ORM, so every query is one I can read and explain. Business-hours SLA math lives in a single tested Postgres function used by inserts, updates and backfills alike, rather than re-implemented in three places that would drift apart.</dd>
       </dl>
 
       <h2><span class="h-idx" aria-hidden="true">§05</span>Validation</h2>
@@ -147,6 +153,16 @@
         recomputing SLA due times for existing tickets) and were rehearsed on a
         sanitized copy of production data before running for real.
       </p>
+      <p>
+        The guardrails are mechanical rather than cultural. One
+        <code>verify.sh</code> script is the definition of done &mdash; six stages,
+        cheapest first, fail-fast across both workspaces. A pre-commit hook
+        enforces the layer-separation rule, a no-inline-styles rule, and a hard
+        500-line cap per file on every touched file. Exceptions need an explicit
+        disable comment with a written reason. I wrote those rules because I'm
+        reviewing agent-written code daily and I'd rather a machine catch drift
+        than rely on my attention at 11pm.
+      </p>
 
       <h2><span class="h-idx" aria-hidden="true">§06</span>Outcome</h2>
       <ul class="tight">
@@ -156,12 +172,18 @@
         <li>SLA-compliance and resolution-time metrics are accumulating now that the system measures them — real figures will replace this sentence as they mature.</li>
       </ul>
 
-      <h2><span class="h-idx" aria-hidden="true">§07</span>What's next</h2>
+      <h2><span class="h-idx" aria-hidden="true">§07</span>What I'd change</h2>
+      <ul class="tight">
+        <li><strong>First-response times aren't captured.</strong> The columns exist and nothing populates them, so first-response SLA isn't a metric I can report &mdash; only resolution. It's the next thing I'm fixing, and until it's fixed I don't quote it.</li>
+        <li><strong>Authorisation would be stronger with RLS underneath it.</strong> The application-level model is deliberate and documented, but defence in depth would mean the database refusing a bad query rather than trusting the layer above it.</li>
+        <li><strong>No in-app email threading, permanently.</strong> The work mailbox sits behind the client's VPN and is unreachable from where this is deployed. Some problems are environmental and the right answer is to scope them out rather than build something that half-works.</li>
+      </ul>
+
+      <h2><span class="h-idx" aria-hidden="true">§08</span>What's next</h2>
       <p>
         Escalation tracking (the dashboard tile already reserves the spot), SLA
         at-risk/breach rollups on the helpdesk dashboard, and an automated daily
-        summary email. The public demo instance with synthetic data is being
-        prepared so you can explore all of this yourself.
+        summary email.
       </p>
 
       <a class="backlink" href="../#projects"><span class="arr" aria-hidden="true">←</span> All projects</a>
