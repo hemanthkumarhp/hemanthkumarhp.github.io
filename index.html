@@ -79,20 +79,15 @@
     </div>
   </section>
 
-  <!-- ============================ MARQUEE ============================ -->
-  <div class="marquee" aria-label="Key numbers">
+  <!-- ======================= EVIDENCE STRIP ======================= -->
+  <div class="marquee static" aria-label="Operating record">
     <div class="marquee-track">
       <div class="marquee-group">
-        <span><strong>~100</strong> tickets/month across 277 partners, 28 states</span><span class="sep" aria-hidden="true">✦</span>
-        <span><strong>2,750</strong> automated tests in the helpdesk platform I built</span><span class="sep" aria-hidden="true">✦</span>
-        <span><strong>Live</strong> in production since 18 May 2026 — PulseOps</span><span class="sep" aria-hidden="true">✦</span>
-        <span><strong>12</strong> months in application support, 19 in support</span><span class="sep" aria-hidden="true">✦</span>
-      </div>
-      <div class="marquee-group" aria-hidden="true">
-        <span><strong>~100</strong> tickets/month across 277 partners, 28 states</span><span class="sep">✦</span>
-        <span><strong>2,750</strong> automated tests in the helpdesk platform I built</span><span class="sep">✦</span>
-        <span><strong>Live</strong> in production since 18 May 2026 — PulseOps</span><span class="sep">✦</span>
-        <span><strong>12</strong> months in application support, 19 in support</span><span class="sep">✦</span>
+        <span><strong>PulseOps</strong> live in production since 18 May 2026</span><span class="sep" aria-hidden="true">✦</span>
+        <span><strong>5,982</strong> report emails auto-matched, 90% untouched by hand</span><span class="sep" aria-hidden="true">✦</span>
+        <span><strong>~130,000</strong> field checks before the client report ships, daily</span><span class="sep" aria-hidden="true">✦</span>
+        <span><strong>~100</strong> tickets/month · 277 partners · 28 states</span><span class="sep" aria-hidden="true">✦</span>
+        <span>React · Express · PostgreSQL · Python · n8n</span>
       </div>
     </div>
   </div>
@@ -116,6 +111,7 @@
       <div class="flagship-body reveal">
         <span class="badge">In production</span>
         <h3><a href="projects/pulseops.html">PulseOps</a></h3>
+        <p class="proj-proves mono">Proves: I can design, ship and operate a system end to end</p>
         <p>
           Full-stack helpdesk &amp; operations platform: SLA-tracked ticketing
           with business-hours pause/resume logic, role-based access,
@@ -147,33 +143,28 @@
       <a class="proj-row" href="projects/reportsense.html">
         <span class="proj-idx" aria-hidden="true">02</span>
         <span class="proj-name">ReportSense v4.1 <span class="badge">In production</span></span>
-        <span class="proj-desc">Email-ingestion automation that stamps partner report deliveries into PulseOps. Deterministic TF-IDF fuzzy matching first; an LLM is called only when confidence is low. Classifies recall and delay emails, and uses IMAP arrival time so delivery stamps can't be gamed.</span>
-        <span class="proj-meta">n8n<br>JavaScript · TF-IDF<br>LLM fallback</span>
+        <span class="proj-desc"><em>Proves: I can find and fix a production metric that broke quietly.</em> Automation that replaced 45 minutes of my own daily work with about five. Deterministic matching that refuses to guess between two close candidates. When its accuracy drifted over three months, I traced 218 failures to the cause, proved the fix offline before building it, and verified the recovery on the same metric.</span>
+        <span class="proj-meta">n8n<br>TF-IDF matching<br>5,982 emails</span>
         <span class="proj-arrow" aria-hidden="true">→</span>
       </a>
 
       <a class="proj-row" href="projects/t1-dsr-validator.html">
         <span class="proj-idx" aria-hidden="true">03</span>
         <span class="proj-name">T1 DSR Validator <span class="badge">In production</span></span>
-        <span class="proj-desc">Python validator that recomputes 18 fields of a daily client sales report against two reference workbooks before it ships. Run every day; the report's error rate has been zero since adoption. 28 unit tests.</span>
-        <span class="proj-meta">Python<br>pandas · openpyxl<br>28 tests</span>
+        <span class="proj-desc"><em>Proves: I get handed client-facing work when it matters.</em> The developer who owned this automation left; my manager gave me the work instead of rehiring. A validator that recomputes 18 derived fields of a daily client report — about 130,000 checks in 70 seconds — as the gate before it ships. Client escalations on that report stopped after it went into use in June 2026.</span>
+        <span class="proj-meta">Python<br>pandas · openpyxl<br>daily since Jun 2026</span>
         <span class="proj-arrow" aria-hidden="true">→</span>
       </a>
 
-      <div class="proj-row">
-        <span class="proj-idx" aria-hidden="true">04</span>
-        <span class="proj-name">MTM–PCSD Validator <span class="badge">In production</span></span>
-        <span class="proj-desc">Config-driven reconciliation of two master datasets: flags mismatches, missing records, and duplicates into a timestamped Excel report with execution logs. All comparison rules live in a JSON config, so field pairs can change without touching code. In routine use.</span>
-        <span class="proj-meta">Python<br>pandas<br>config-driven</span>
-      </div>
-
-      <div class="proj-row">
-        <span class="proj-idx" aria-hidden="true">05</span>
-        <span class="proj-name">AP Data Pipeline <span class="badge plain">In progress</span></span>
-        <span class="proj-desc">Turning a working manual data-processing script into an orchestrated pipeline — browser-automated download, structural validation, MTM-exception enrichment, and validated Excel outputs with per-run state and logs. Processing logic works today; orchestrator and validators are in design.</span>
-        <span class="proj-meta">Python<br>orchestration<br>planned</span>
-      </div>
     </div>
+    <p class="note reveal">
+      Also built and in routine use: the <strong>MTM&ndash;PCSD Validator</strong>,
+      a config-driven reconciliation of two master datasets where every
+      comparison rule lives in a JSON config. In progress: an
+      <strong>AP data pipeline</strong> turning a working manual script into an
+      orchestrated one &mdash; the processing logic runs today; the orchestrator
+      and validators are still in design.
+    </p>
   </section>
 
   <!-- ============================ HOW I BUILD ============================ -->

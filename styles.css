@@ -332,6 +332,28 @@ html.js .marquee-track { animation: marquee 30s linear infinite; }
 .marquee-group span strong { color: var(--ink); font-weight: 620; }
 .marquee-group .sep { color: var(--accent); letter-spacing: 0; }
 @keyframes marquee { to { transform: translateX(calc(-50% - 1.75rem)); } }
+.marquee.static { overflow: visible; }
+.marquee.static .marquee-track { width: auto; flex-wrap: wrap; justify-content: center; }
+html.js .marquee.static .marquee-track { animation: none; }
+.marquee.static .marquee-group { flex-wrap: wrap; justify-content: center; gap: 0.75rem 2.5rem; }
+.proj-proves {
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.9rem;
+}
+.proj-desc em {
+  display: block;
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 560;
+  margin-bottom: 0.5rem;
+}
 
 /* ---------- Sections ---------- */
 .section {
