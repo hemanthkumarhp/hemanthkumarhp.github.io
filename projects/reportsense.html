@@ -124,6 +124,25 @@
         <li>Most emails match without any AI call; the LLM handles only the genuinely ambiguous tail.</li>
       </ul>
 
+      <h2><span class="h-idx" aria-hidden="true">§05</span>When it drifted, and what I did</h2>
+      <p>
+        This is the part I'd most want to be asked about. The matcher degraded
+        silently over roughly three months, and catching it was not automatic.
+      </p>
+      <ul class="tight">
+        <li><strong>Detected.</strong> The share of emails falling through to manual review climbed from 2.0% in April to 15.0% in the week of 20 July, and a backlog of 218 unmatched mails accumulated between 26 June and 25 July. Nothing alerted &mdash; the number was there to be read, and reading it was the job.</li>
+        <li><strong>Diagnosed.</strong> I classified all 218 failures into a taxonomy with counts: exact-score ties from duplicate profiles (74), reports missing from a stale snapshot (54), margin collapse between parent and sibling reports (60), vocabulary gap (27), no tokens matched (3). The root cause was not the matcher. The profile snapshot it read was written only by a manual admin button; the nightly job rebuilt the delivery schedule but never rebuilt the profiles. The matcher was scoring correctly against stale data.</li>
+        <li><strong>Quantified before building.</strong> I replayed the matcher offline against a current, de-duplicated profile set: <strong>181 of 218 resolved (83%)</strong> &mdash; with <em>no change</em> to the score or margin thresholds.</li>
+        <li><strong>Rejected the obvious fix.</strong> Lowering the accept thresholds would have cleared the backlog and looked like a fix. It converts correct rejections into silent wrong stamps &mdash; trading a visible review queue for invisible bad data in an SLA metric. Worse failure, quieter.</li>
+        <li><strong>Verified on the same metric.</strong> Review rate fell from 15.0% to <strong>6.3%</strong> the following week and has held between 5% and 8% since.</li>
+      </ul>
+      <p class="note">
+        Honest status: this was diagnosed and mitigated, not permanently closed.
+        The recovery came from repointing the workflow and rebuilding profiles by
+        hand. Automating that rebuild is the next change &mdash; until it ships, the
+        drift can recur.
+      </p>
+
       <a class="backlink" href="../#projects"><span class="arr" aria-hidden="true">←</span> All projects</a>
     </div>
   </article>
