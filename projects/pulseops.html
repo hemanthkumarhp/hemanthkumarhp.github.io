@@ -55,7 +55,8 @@
         <div><dt>My role</dt><dd>Everything except most of the typing: requirements, data model, SLA rules, UX decisions, testing, deployment, operations</dd></div>
         <div><dt>Status</dt><dd>In daily production use by my support team</dd></div>
         <div><dt>Stack</dt><dd>React 19 · Express 5 · TypeScript · PostgreSQL 16 · Docker · JWT</dd></div>
-        <div><dt>Scale</dt><dd>32 database tables · 70+ test files · 10+ service modules</dd></div>
+        <div><dt>Scale</dt><dd>34 tables · ~61,600 lines of TypeScript · ~2,750 automated tests · 664 commits</dd></div>
+        <div><dt>Reliability</dt><dd>Live since 18 May 2026 — no incidents to date</dd></div>
         <div><dt>Built with</dt><dd>AI-assisted development (Claude Code + Codex, BMAD method) — <a href="../#how-i-build">how I build</a></dd></div>
         <div><dt>Links</dt><dd><a href="https://pulseops.duckdns.org/" rel="noopener">Live instance</a> (synthetic-data demo being prepared) · public repo being prepared</dd></div>
       </dl>
@@ -140,7 +141,7 @@
 
       <h2><span class="h-idx" aria-hidden="true">§05</span>Validation</h2>
       <p>
-        70+ test files across services, middleware, and routes — unit tests for
+        ~2,750 automated tests across 270 colocated test files — unit tests for
         the SLA math and state machine, integration tests against a real
         PostgreSQL instance for the API. Migrations ship with backfills (e.g.
         recomputing SLA due times for existing tickets) and were rehearsed on a
