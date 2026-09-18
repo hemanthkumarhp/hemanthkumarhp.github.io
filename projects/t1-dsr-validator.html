@@ -56,7 +56,24 @@
         <div><dt>Tests</dt><dd>28 unit tests over the validation logic</dd></div>
       </dl>
 
-      <h2><span class="h-idx" aria-hidden="true">§01</span>The problem</h2>
+      <h2><span class="h-idx" aria-hidden="true">§01</span>How I got this work</h2>
+      <p>
+        A developer had been assigned the automation for this report and left
+        the company; the script he left behind was never usable in production.
+        My manager gave the work to me rather than rehiring for the role, and
+        handed over the departed developer's code &mdash; on the strength of the
+        two systems above.
+      </p>
+      <p>
+        I was asked for a validator, not a rewrite. So I spent two working
+        sessions with the analyst who owns the report deriving what
+        &ldquo;correct&rdquo; actually means, field by field, and built against
+        that. Two of the eighteen field mappings had competing candidate columns
+        in the source workbooks; we resolved them by testing both against live
+        data, and the verdicts are annotated in the code.
+      </p>
+
+      <h2><span class="h-idx" aria-hidden="true">§02</span>The problem</h2>
       <p>
         The Daily Sales Report is client-facing: 18 of its columns are derived from
         a quarterly template and a master mapping workbook. A wrong lookup or stale
@@ -64,8 +81,16 @@
         after delivery. Manual spot-checks caught some errors and missed others,
         and every check cost analyst time the team didn't have.
       </p>
+      <p>
+        The check before this existed was the analyst doing the same comparisons
+        by hand in Excel &mdash; about 30 minutes a day, sampled rather than
+        exhaustive, and error-prone in exactly the way that matters: it found the
+        mistakes you thought to look for. In the fortnight before the build, the
+        team took two or three escalations from the client over inaccurate data
+        in this report.
+      </p>
 
-      <h2><span class="h-idx" aria-hidden="true">§02</span>How it works</h2>
+      <h2><span class="h-idx" aria-hidden="true">§03</span>How it works</h2>
       <ul class="tight">
         <li>Reads exactly three Excel inputs — the template, the MTM master, and the day's DSR — identifying each by filename pattern, and refuses to run on ambiguous input.</li>
         <li>Recomputes all 18 derived columns independently from the reference workbooks and compares them cell-by-cell to what the DSR actually says.</li>
@@ -73,8 +98,15 @@
         <li>Logs every run to a timestamped file, so "was it validated?" is always answerable.</li>
         <li>Ships with a README written for non-technical colleagues — the tool is only useful if the team can run it without me.</li>
       </ul>
+      <dl class="facts reveal">
+        <div class="row"><dt>Rows validated, recent run</dt><dd>7,247 (the file is quarter-to-date and grows through the quarter)</dd></div>
+        <div class="row"><dt>Field-level checks in that run</dt><dd>~130,000 &mdash; 7,247 rows &times; 18 derived fields</dd></div>
+        <div class="row"><dt>Wall clock</dt><dd>about 70 seconds, end to end</dd></div>
+        <div class="row"><dt>Rows with at least one failure</dt><dd>4</dd></div>
+        <div class="row"><dt>In service</dt><dd>Six days a week since 25 June 2026</dd></div>
+      </dl>
 
-      <h2><span class="h-idx" aria-hidden="true">§03</span>Decisions worth explaining</h2>
+      <h2><span class="h-idx" aria-hidden="true">§04</span>Decisions worth explaining</h2>
       <dl class="decisions">
         <dt>Recompute, don't sample</dt>
         <dd>Spot-checking finds the errors you guessed might exist. Recomputing every derived cell finds the ones you didn't — which is the category that reaches clients.</dd>
@@ -82,13 +114,40 @@
         <dd>A row the validator can't verify is not the same as a row that's wrong. Mixing them teaches people to ignore the report; separating them keeps failures loud.</dd>
         <dt>Unit tests on the validator itself</dt>
         <dd>A validator with a bug is worse than no validator — it manufactures false confidence. The 28 tests pin the matching, lookup, and comparison logic against fixture workbooks.</dd>
+        <dt>Built for a non-author to run, because that was the actual requirement</dt>
+        <dd>The inherited script had 21 hardcoded <code>D:\</code> paths, wrote output to one person's Downloads folder, had a single function, one print statement and no tests. It worked on exactly one machine. What I specified instead discovers its inputs from a folder, fails fast with a diagnostic naming the columns it actually found, writes a timestamped log every run, and ships with a README aimed at a non-technical colleague &mdash; because the person who runs it every day is not me. That is a maintainability argument, not a cleverness one.</dd>
+        <dt>Three states, not two: pass, fail, and warn</dt>
+        <dd>The validator refuses to score what it cannot verify. If the reference resolves, a mismatch is a failure. If the reference is missing or the key is ambiguous, an empty cell becomes a warning rather than a false failure &mdash; while a populated cell that cannot be confirmed stays a failure. Same instinct as the margin rule in ReportSense: an unverifiable case becomes visible work, never a silent verdict.</dd>
       </dl>
 
-      <h2><span class="h-idx" aria-hidden="true">§04</span>Outcome</h2>
+      <h2><span class="h-idx" aria-hidden="true">§05</span>Outcome</h2>
       <ul class="tight">
         <li>Client escalations on that report stopped after the validator became part of the daily pre-delivery routine.</li>
         <li>Checking is now minutes of machine time instead of analyst attention.</li>
         <li>A sibling tool, the MTM–PCSD Validator, applies the same philosophy to reconciling two master datasets — with every comparison rule in a JSON config so field pairs can change without code changes.</li>
+      </ul>
+
+      <h2><span class="h-idx" aria-hidden="true">§06</span>It outgrew its brief &mdash; and that's a problem</h2>
+      <p>
+        The analyst now deliberately submits the report with some fields left
+        partial, and copies the validator's <em>expected</em> values back into it.
+        The tool crossed from checking the report to helping author it. As
+        evidence that the output is trusted, that's the strongest signal I have.
+      </p>
+      <p>
+        It is also a design flaw, and nobody designed it. The expected-value
+        engine is now load-bearing for data that never gets independently
+        checked &mdash; and a validator that supplies the answer can no longer be
+        said to have verified it. The right fix is either an explicit, tested
+        generate mode, or a second check over the copied fields. I'd want that
+        closed before the tool gets any more trust, not after.
+      </p>
+
+      <h2><span class="h-idx" aria-hidden="true">§07</span>What I'd change</h2>
+      <ul class="tight">
+        <li><strong>The warnings are noise and people ignore them.</strong> About 88% of rows carry at least one warning, concentrated in three fields whose reference sheets are simply incomplete. The warning state exists so that missing reference data can't masquerade as a report defect &mdash; but I never tuned the thresholds after the build, so the failure count is the only signal anyone reads. That sheet needs triaging or suppressing.</li>
+        <li><strong>Nothing enforces that it runs.</strong> There's no scheduler and no CI. It runs before delivery because the analyst has the habit, which is not a control.</li>
+        <li><strong>Bus factor of one.</strong> Whoever delivers the report runs it, there's no second operator, and the developer who owned the original script has left. That's the same failure that created this work in the first place.</li>
       </ul>
 
       <a class="backlink" href="../#projects"><span class="arr" aria-hidden="true">←</span> All projects</a>
