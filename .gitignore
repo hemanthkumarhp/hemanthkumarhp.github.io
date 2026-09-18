@@ -13,3 +13,9 @@ site-v2/
 
 # Local agent instructions (describes the private files; keep off the public repo)
 CLAUDE.md
+
+*.xlsx
+
+
+# Private career working files — never publish
+asset files/
